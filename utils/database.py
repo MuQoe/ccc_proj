@@ -8,6 +8,11 @@ PLATFORM_DICT = {
     MASTDON_DB: 'Mastodon'
 }
 
+SENTIMENT_DICT = {
+    TWITTER_DB: False,
+    MASTDON_DB: True
+}
+
 class Database:
     def __init__(self, server, db_name):
         self.server = server
@@ -23,10 +28,17 @@ class Database:
     def get_document(self, doc_id):
         return self.db.get(doc_id)
 
+    def find_document(self, selector):
+        return self.db.find(selector)
+
     def update_document(self, doc_id, document):
         doc = self.db.get(doc_id)
         doc.update(document)
         self.db.save(doc)
+
+    def get_all_documents(self):
+        result = self.db.view('_all_docs', include_docs=True)
+        return [row.doc for row in result]
 
     def delete_document(self, doc_id):
         doc = self.db.get(doc_id)
@@ -39,3 +51,4 @@ class DBManager:
 
     def get_database(self, db_name) -> Database:
         return Database(self.server, db_name)
+

@@ -3,15 +3,16 @@ import os
 import sys
 from datetime import datetime
 
-from flask import Flask, jsonify,request
+from flask import Flask, jsonify, request
 import logging
-
-
-
 from utils.response import *
 from utils.database import *
+from utils.sentiment import *
 from flask import Flask
 from couchdb.mapping import Document, TextField, IntegerField
+
+from views.views import *
+
 app = Flask(__name__, static_url_path='/static')
 app.debug = True
 
@@ -51,6 +52,19 @@ logger.addHandler(stream_handler)
 
 logger.info('App Started')
 
+init_views(manager)
+
+
+def get_group_counts():
+    view_name = 'group_by_gcc'
+    db = manager.get_database(TWITTER_DB)
+    result = db.db.view('twitter/' + view_name, group=True)
+    group_counts = json.loads(TWITTER_GEO_DATA)
+    for row in result:
+        group_counts[row.key]['emoji_count'] = row.value
+        group_counts[row.key]['percentage'] = group_counts[row.key]['emoji_count'] / group_counts[row.key]['total_count']
+    return group_counts
+
 @app.route('/save_data', methods=['POST'])
 def save_data():
     data = request.form
@@ -65,8 +79,37 @@ def save_data():
         return create_response('fail', 'Invalid Data')
 
     db = manager.get_database(platfrom)
+    try:
+        query = {
+            "selector": {
+                "id": content['id']
+            }
+        }
+        result = list(db.find_document(query))
+        if len(result) > 0:
+            return create_response('fail', 'Data already with this id already exist.')
+    except Exception as e:
+        return create_response('fail', 'Can not obtain the data.id from the data.')
+
+    # sentiment analysis
+    if SENTIMENT_DICT[platfrom]:
+        try:
+            sentiment, prob = find_sentiment(content['text'])
+            content['sentiment'] = sentiment
+            content['sentiment_prob'] = prob
+        except:
+            return create_response('fail', 'Sentiment analysis failed.')
+
     doc_id, doc_rev = db.create_document(content)
     return create_response('success', f'{PLATFORM_DICT[platfrom]} data saved.', {'id': doc_id})
+
+@app.route('/twitter_geo', methods=['GET'])
+def get_twitter_geo_data():
+    try:
+        result = get_group_counts()
+        return create_response('success', 'Twitter geo data obtained.', result)
+    except Exception as e:
+        return create_response('fail', f'Twitter geo data failed to with error: {str(e)}')
 
 
 if __name__ == "__main__":
