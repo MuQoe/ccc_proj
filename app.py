@@ -129,43 +129,9 @@ def get_sentiment_twitter():
 # aaa = 0
 
 
-@app.route('/save_data', methods=['POST'])
-def save_data_api():
-    data = request.form
-    content = data["data"]
-    platfrom = data["platform"]
-    platfrom = platfrom.lower()
-    if not platfrom in PLATFORM_DICT:
-        return create_response('fail', 'Platform not supported.')
-    try:
-        content = json.loads(content)
-    except Exception as e:
-        return create_response('fail', 'Invalid Data')
 
-    db = manager.get_database(platfrom)
-    try:
-        query = {
-            "selector": {
-                "id": content['id']
-            }
-        }
-        result = list(db.find_document(query))
-        if len(result) > 0:
-            return create_response('fail', 'Data already with this id already exist.')
-    except Exception as e:
-        return create_response('fail', 'Can not obtain the data.id from the data.')
 
-    # sentiment analysis
-    if SENTIMENT_DICT[platfrom]:
-        try:
-            sentiment, prob = find_sentiment(content['text'])
-            content['sentiment'] = sentiment
-            content['sentiment_prob'] = prob
-        except:
-            return create_response('fail', 'Sentiment analysis failed.')
 
-    doc_id, doc_rev = db.create_document(content)
-    return create_response('success', f'{PLATFORM_DICT[platfrom]} data saved.', {'id': doc_id})
 
 
 @app.route('/twitter_geo', methods=['GET'])
