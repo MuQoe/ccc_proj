@@ -1,4 +1,4 @@
-## 项目文件结构
+## Project structure and files
 
 ```
 ccc_proj
