@@ -21,7 +21,7 @@ app = Flask(__name__, static_url_path='/static')
 app.debug = True
 CORS(app, supports_credentials=True)
 
-DB_URL = 'http://testuser:Linshimima@server.muqoe.xyz:5984/'
+DB_URL = 'http://admin:password@ip:5984/'
 manager = DBManager(DB_URL)
 
 # Create Logger

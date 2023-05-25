@@ -31,3 +31,7 @@ ccc_proj
 ├── requirements.txt                        # python dependencies
 └──  Dockerfile                             # docker file
 ```
+
+
+## Running the project
+Change The DB_URL to the correct one responding to the ansible script.
